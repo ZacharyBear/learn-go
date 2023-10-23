@@ -1,4 +1,4 @@
-module example/hello
+module cn.zenkie/hello
 
 go 1.21.3
 
