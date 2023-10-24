@@ -6,7 +6,8 @@ import (
 	"os"
 	"strconv"
 	"math/cmplx"
-	"zenkie.cn/calculator"
+	"github.com/zenkiebear/learn-go/calculator"
+	"rsc.io/quote"
 )
 
 
@@ -137,6 +138,8 @@ func main() {
 	fmt.Println("Version: ", calculator.Version)
 	// fmt.Println("logMessage: ", calculator.logMessage)
 	// fmt.Println("Internal sum: ", calculator.internalSum(5))
+
+	fmt.Println(quote.Hello())
 }
 
 func sum(num1 string, num2 string) int {
