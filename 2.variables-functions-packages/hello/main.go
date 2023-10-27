@@ -3,13 +3,13 @@ package main
 import (
 	"fmt"
 	"math"
+	"math/cmplx"
 	"os"
 	"strconv"
-	"math/cmplx"
+
 	"github.com/zenkiebear/learn-go/calculator"
 	"rsc.io/quote"
 )
-
 
 // Execute: go run variables.go 2 3
 func main() {
