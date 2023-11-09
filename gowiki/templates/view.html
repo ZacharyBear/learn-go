@@ -4,13 +4,49 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>View</title>
-  <link rel="stylesheet" href="/global.css" />
+  <link rel="stylesheet" href="/styles/global.css" />
+  <link rel="stylesheet" href="/styles/view.css" />
+  <script src="https://unpkg.com/gsap@3.12.2/dist/gsap.js"></script>
+  <script src="/scripts/hooks.js"></script>
 </head>
 <body>
-  <h1>{{.Title}}</h1>
-  <p>
-    <a href='/edit/{{.Title}}'>✍️ Edit this page</a>
-  </p>
-  <div>{{ printf "%s" .Body }}</div>
+  <header>
+    <a id="back" href="/">← Home</a>
+  </header>
+  <main>
+    <h1 class="title">{{.Title}}</h1>
+    <p>
+      <a id="edit" href='/edit/{{.Title}}'>
+        <span>✍️</span>
+        Edit this page
+      </a>
+    </p>
+    <div>{{ printf "%s" .Body }}</div>
+  </main>
 </body>
+<script type='text/javascript'>
+  const tlEdit = gsap.timeline({
+    duration: .1,
+    ease: 'circle'
+  });
+  tlEdit.set('#edit span', { x: -25, y: -5, rotate: -15 })
+  tlEdit.to('#edit span', { x: -20, y: 2, duration: .1 })
+  tlEdit.to('#edit span', { x: -15, y: -5, duration: .1 })
+  tlEdit.to('#edit span', { x: -10, y: 2, duration: .1 })
+  tlEdit.to('#edit span', { x: -5, y: -5, duration: .1 })
+  tlEdit.to('#edit span', { x: 0, y: 0, rotate: 0, duration: .1 })
+  tlEdit.to('#edit span', { display: 'inline' })
+
+  const back = document.getElementById('back')
+  const tlBack = gsap.timeline()
+  tlBack.to('#back', {
+    x: -5
+  }).pause();
+  back.onmouseenter = e => {
+    tlBack.restart()
+  }
+  back.onmouseleave = e => {
+    tlBack.reverse()
+  }
+</script>
 </html>

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -8,14 +9,18 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strings"
 )
 
 const dataPath = "data/"
 const templatePath = "templates/"
+const isDev = true
 
 var templates = template.Must(template.ParseFiles(
 	templatePath+"edit.html",
-	templatePath+"view.html"))
+	templatePath+"view.html",
+	templatePath+"index.html"),
+)
 var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
 
 type Page struct {
@@ -49,9 +54,19 @@ func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
 }
 
 func renderTempalte(w http.ResponseWriter, templateName string, p *Page) {
-	err := templates.ExecuteTemplate(w, templateName+".html", p)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	filename := templateName + ".html"
+	// In development environment, caching is unnecessary
+	if isDev {
+		t, err := template.ParseFiles("templates/" + filename)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		t.Execute(w, p)
+	} else {
+		err := templates.ExecuteTemplate(w, filename, p)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -94,14 +109,37 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 	}
 }
 
+func handleIndex(w http.ResponseWriter, r *http.Request) {
+	switch r.URL.Path {
+	case "/", "/welcome", "/index", "/index.htm":
+		renderTempalte(w, "index", nil)
+	default:
+		http.FileServer(http.Dir("public")).ServeHTTP(w, r)
+	}
+}
+
+func listPages(w http.ResponseWriter, r *http.Request) {
+	files, _ := os.ReadDir("data/")
+	names := make([]string, len(files))
+	for i, de := range files {
+		name := de.Name()[:strings.LastIndex(de.Name(), ".txt")]
+		names[i] = name
+	}
+	json, err := json.Marshal(names)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	w.Write(json)
+}
+
 func main() {
-	// handle static files
-	http.Handle("/", http.FileServer(http.Dir("public")))
+	http.HandleFunc("/", handleIndex)
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
+	http.HandleFunc("/list", listPages)
 	// address := ":8000"
 	address := "localhost:8000"
-	fmt.Printf("✌️ Wiki is running on: http://%s\n", address)
+	fmt.Printf("👌 Wiki is running on: http://%s\n", address)
 	log.Fatal(http.ListenAndServe(address, nil))
 }

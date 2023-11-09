@@ -1,0 +1,24 @@
+main {
+  margin: 100px auto 0;
+  width: 80%;
+}
+#pages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: var(--clr-l2);
+  border-radius: 15px;
+
+  & li {
+    padding: 10px;
+    border-radius: 10px;
+    background-color: var(--clr-l7);
+    cursor: pointer;
+    border: 1px solid transparent;
+
+    &:hover {
+      border-color: var(--clr-white);
+    }
+  }
+}
