@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"html/template"
 	"log"
@@ -44,17 +43,6 @@ func loadPage(title string) (*Page, error) {
 	return &Page{Title: title, Body: string(body)}, nil
 }
 
-func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
-	m := validPath.FindStringSubmatch(r.URL.Path)
-	if m == nil {
-		http.NotFound(w, r)
-		log.Println("not found")
-		return "", errors.New("Invalid Page Title")
-	}
-	log.Println("rendering", m)
-	return m[2], nil // The title is the second subexpression
-}
-
 func renderTempalte(w http.ResponseWriter, templateName string, p *Page) {
 	// In development environment, caching is unnecessary
 	if isDev {
@@ -67,12 +55,6 @@ func renderTempalte(w http.ResponseWriter, templateName string, p *Page) {
 			}).
 			Parse(string(content))
 		t.Execute(w, p)
-
-		// t, err := template.ParseFiles(filename)
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// }
-		// t.Execute(w, p)
 	} else {
 		err := templates.ExecuteTemplate(w, templateName+".html", p)
 		if err != nil {
