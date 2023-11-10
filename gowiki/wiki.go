@@ -16,7 +16,9 @@ const dataPath = "data/"
 const templatePath = "templates/"
 const isDev = true
 
-var templates = template.Must(template.ParseFiles(
+var templates = template.Must(template.New("templates").Funcs(template.FuncMap{
+	"unescapeHTML": unescapeHTML,
+}).ParseFiles(
 	templatePath+"edit.html",
 	templatePath+"view.html",
 	templatePath+"index.html"),
@@ -25,12 +27,12 @@ var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
 
 type Page struct {
 	Title string
-	Body  []byte
+	Body  string
 }
 
 func (p *Page) save() error {
 	filename := dataPath + p.Title + ".txt"
-	return os.WriteFile(filename, p.Body, 0600)
+	return os.WriteFile(filename, []byte(p.Body), 0600)
 }
 
 func loadPage(title string) (*Page, error) {
@@ -39,7 +41,7 @@ func loadPage(title string) (*Page, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Page{Title: title, Body: body}, nil
+	return &Page{Title: title, Body: string(body)}, nil
 }
 
 func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
@@ -54,20 +56,33 @@ func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
 }
 
 func renderTempalte(w http.ResponseWriter, templateName string, p *Page) {
-	filename := templateName + ".html"
 	// In development environment, caching is unnecessary
 	if isDev {
-		t, err := template.ParseFiles("templates/" + filename)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		filename := "templates/" + templateName + ".html"
+		content, _ := os.ReadFile(filename)
+		t, _ := template.
+			New(templateName).
+			Funcs(template.FuncMap{
+				"unescapeHTML": unescapeHTML,
+			}).
+			Parse(string(content))
 		t.Execute(w, p)
+
+		// t, err := template.ParseFiles(filename)
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// }
+		// t.Execute(w, p)
 	} else {
-		err := templates.ExecuteTemplate(w, filename, p)
+		err := templates.ExecuteTemplate(w, templateName+".html", p)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
+}
+
+func unescapeHTML(s string) template.HTML {
+	return template.HTML(s)
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
@@ -89,7 +104,7 @@ func editHandler(w http.ResponseWriter, r *http.Request, title string) {
 
 func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	body := r.FormValue("body")
-	p := &Page{Title: title, Body: []byte(body)}
+	p := &Page{Title: title, Body: body}
 	err := p.save()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
