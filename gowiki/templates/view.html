@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/styles/view.css" />
   <script src="https://unpkg.com/gsap@3.12.2/dist/gsap.js"></script>
   <script src="/scripts/hooks.js"></script>
+  <script src="/scripts/components.js"></script>
 </head>
 <body>
   <header>
@@ -25,6 +26,8 @@
   </main>
 </body>
 <script type='text/javascript'>
+  loadBackButton()
+
   const tlEdit = gsap.timeline({
     duration: .1,
     ease: 'circle'
@@ -36,17 +39,5 @@
   tlEdit.to('#edit span', { x: -5, y: -5, duration: .1 })
   tlEdit.to('#edit span', { x: 0, y: 0, rotate: 0, duration: .1 })
   tlEdit.to('#edit span', { display: 'inline' })
-
-  const back = document.getElementById('back')
-  const tlBack = gsap.timeline()
-  tlBack.to('#back', {
-    x: -5
-  }).pause();
-  back.onmouseenter = e => {
-    tlBack.restart()
-  }
-  back.onmouseleave = e => {
-    tlBack.reverse()
-  }
 </script>
 </html>
