@@ -53,7 +53,8 @@ func main() {
 
 	// select
 	// testSelect(gormDb)
-	testSelectWithConditions(gormDb)
+	// testSelectWithConditions(gormDb)
+	testSelectAdvanced(gormDb)
 }
 
 type User struct {
@@ -203,4 +204,23 @@ func testSelectWithConditions(db *gorm.DB) {
 	// Scan
 	db.Debug().Where("id = ?", 1).Scan(&user)
 	fmt.Println(user)
+}
+
+func testSelectAdvanced(db *gorm.DB) {
+	// imagine there're hundreds fields in User struct
+	type APIUser struct {
+		ID   int
+		Name string
+	}
+	var apiUsers []APIUser
+	db.Debug().Model(&User{}).Limit(10).Find(&apiUsers)
+	fmt.Println(apiUsers)
+
+	// Subquery
+	var users []User
+	db.Debug().Table("(?) as u", db.Model(&User{}).
+		Select("name", "birthday")).
+		Where("birthday is not null").
+		Find(&users)
+	fmt.Println(users)
 }
