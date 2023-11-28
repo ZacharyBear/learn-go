@@ -58,7 +58,12 @@ func main() {
 
 	// update
 	// testSave(gormDb)
-	testUpdate(gormDb)
+	// testUpdate(gormDb)
+
+	// delete
+	// testDelete(gormDb)
+	// testDeleteByPrimaryKey(gormDb)
+	testSoftDelete(gormDb)
 }
 
 type User struct {
@@ -255,4 +260,32 @@ func testUpdate(db *gorm.DB) {
 	// Update multiple columns
 	carolinesBirth, _ := time.Parse("2006-01-02", "1987-05-28")
 	db.Debug().Model(&user).Updates(User{Name: "Caroline Channing", Birthday: &carolinesBirth})
+}
+
+type Email struct {
+	ID       int
+	Name     string
+	Address  string
+	DeleteAt gorm.DeletedAt
+}
+
+func (e Email) TableName() string {
+	return "email"
+}
+func testDelete(db *gorm.DB) {
+	email := Email{
+		ID: 1,
+	}
+	db.First(&email)
+	fmt.Println(email)
+	db.Debug().Delete(&email)
+}
+func testDeleteByPrimaryKey(db *gorm.DB) {
+	db.Debug().Delete(&User{}, 5)
+}
+func testSoftDelete(db *gorm.DB) {
+	db.Debug().Delete(&Email{ID: 1})
+	var email Email
+	db.First(&email, 1)
+	fmt.Println(email)
 }
