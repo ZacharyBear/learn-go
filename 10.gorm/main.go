@@ -44,15 +44,20 @@ func main() {
 		panic("failed to connect database")
 	}
 
+	// insert
 	// testInsert(gormDb)
 
 	// testInsertBatch(gormDb)
 
-	testHooks(gormDb)
+	// testHooks(gormDb)
+
+	// select
+	// testSelect(gormDb)
+	testSelectWithConditions(gormDb)
 }
 
 type User struct {
-	ID       uint
+	ID       uint `gorm:"primaryKey"`
 	Name     string
 	Email    string
 	Birthday *time.Time
@@ -115,4 +120,87 @@ func testHooks(db *gorm.DB) {
 	fmt.Print(user)
 	fmt.Println(result.Error)
 	fmt.Println(result.RowsAffected)
+}
+
+func testSelect(db *gorm.DB) {
+	user := User{}
+	db.First(&user) // select * from user order by id limit 1;
+	fmt.Println(user)
+
+	user = User{}
+	db.Take(&user) // select * from user limit 1;
+	fmt.Println(user)
+
+	user = User{}
+	result := db.Last(&user) // select * from user order by id desc limit 1;
+	fmt.Println(user)
+	fmt.Println(result.RowsAffected) // 1
+	fmt.Println(result.Error)        // nil
+
+	user = User{ID: 9999999}
+	result = db.First(&user)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		fmt.Println("Can’t found the data")
+	}
+
+	user = User{}
+	db.First(&user, 10) // select * from user where id = 10
+	fmt.Println(user)
+
+	user = User{}
+	db.First(&user, "10") // select * from user where id = 10
+	fmt.Println(user)
+
+	user = User{}
+	users := []User{}
+	db.Find(&users, []int{1, 2, 3}) // select * from user where id in (1, 2, 3)
+	fmt.Println(users)
+
+	user = User{ID: 10}
+	db.Find(&user) // select * from user where id = 10 limit 1;
+	fmt.Println(user)
+
+	// todo this sample might be incorrect
+	user = User{}
+	db.Debug().Model(User{ID: 10}).First(&user)
+	fmt.Println(user)
+
+	result = db.Find(&users)
+	fmt.Println(result.RowsAffected, result.Error) // users,
+}
+
+func testSelectWithConditions(db *gorm.DB) {
+	user := User{}
+	// String condition
+	db.Where("name like ?", "%Zenkie%").First(&user)
+	fmt.Println(user)
+
+	// Struct condition
+	var users []User
+	db.Where(&User{Name: "John Doe"}).Find(&users)
+	fmt.Println(users)
+
+	// Slice condition
+	db.Where([]int{1, 2, 3}).Find(&users) // select .... where id in (1, 2, 3)
+	fmt.Println(users)
+
+	// Specify the query fields
+	user = User{}
+	db.Debug().Where(&User{ID: 5, Name: "John Doe"}, "id").Find(&user)
+	// the name condition will be ignored
+	fmt.Println(user)
+
+	// Inline condition
+	user = User{}
+	db.Debug().First(&user, "id > ?", 5)
+	fmt.Println(user)
+
+	// Select fields
+	user = User{}
+	db.Select("name", "email").First(&user)
+	fmt.Println(user)
+
+	// Scan
+	db.Debug().Where("id = ?", 1).Scan(&user)
+	fmt.Println(user)
 }
