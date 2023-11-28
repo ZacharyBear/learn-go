@@ -54,7 +54,11 @@ func main() {
 	// select
 	// testSelect(gormDb)
 	// testSelectWithConditions(gormDb)
-	testSelectAdvanced(gormDb)
+	// testSelectAdvanced(gormDb)
+
+	// update
+	// testSave(gormDb)
+	testUpdate(gormDb)
 }
 
 type User struct {
@@ -223,4 +227,32 @@ func testSelectAdvanced(db *gorm.DB) {
 		Where("birthday is not null").
 		Find(&users)
 	fmt.Println(users)
+}
+
+func testSave(db *gorm.DB) {
+	var user User
+	db.First(&user)
+
+	user.Name = "Max Black"
+	maxsBirthday, _ := time.Parse("2006-01-02", "1987-06-09")
+	fmt.Println(maxsBirthday)
+	user.Birthday = &maxsBirthday
+	db.Save(&user)
+}
+
+func testUpdate(db *gorm.DB) {
+	// Update single column
+	db.Model(&User{}).Where("id = ?", 1).Update("name", "Caroline Channing")
+	// UPDATE users SET name='hello' WHERE id=1;
+
+	var user User
+	db.First(&user)
+	db.Model(&user).Update("name", "hello")
+	fmt.Println(user)
+
+	db.Debug().Model(&user).Update("name", "hola")
+
+	// Update multiple columns
+	carolinesBirth, _ := time.Parse("2006-01-02", "1987-05-28")
+	db.Debug().Model(&user).Updates(User{Name: "Caroline Channing", Birthday: &carolinesBirth})
 }
