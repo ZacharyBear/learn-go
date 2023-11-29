@@ -14,10 +14,12 @@ func main() {
 	setupPing(router)
 	setupAsciiJSON(router)
 	renderHTML(router)
-	serverPush(router)
+	go serverPush()
+	JSONP(router)
+	formBinding(router)
 
 	// router.Run() // listen and serve on 0.0.0.0:8080
-	router.RunTLS("localhost:8080", "ssl.pem", "ssl.key")
+	router.Run("localhost:8080")
 }
 
 func setupPing(router *gin.Engine) {
@@ -71,7 +73,8 @@ var html = template.Must(template.New("https").Parse(`
 </html>
 `))
 
-func serverPush(router *gin.Engine) {
+func serverPush() {
+	router := gin.New()
 	router.Static("/assets", "./assets")
 	router.SetHTMLTemplate(html)
 
@@ -84,5 +87,41 @@ func serverPush(router *gin.Engine) {
 		ctx.HTML(http.StatusOK, "https", gin.H{
 			"status": "success",
 		})
+	})
+	router.RunTLS("localhost:8081", "ssl.pem", "ssl.key")
+}
+
+func JSONP(router *gin.Engine) {
+	router.GET("/jsonp", func(c *gin.Context) {
+		data := map[string]interface{}{
+			"foo": "bar",
+		}
+
+		// Request: /jsonp?callback=x
+		// Output: x({"foo": "bar"})
+		c.JSONP(http.StatusOK, data)
+	})
+	router.RunTLS("localhost:8081", "ssl.pem", "ssl.key")
+}
+
+type LoginForm struct {
+	User     string `form:"user" binding:"required"`
+	Password string `form:"password" binding:"required"`
+}
+
+func formBinding(router *gin.Engine) {
+	// curl -v --form user=john --form password=doe http://localhost:8080/login
+	router.POST("/login", func(ctx *gin.Context) {
+		var form LoginForm
+		// Explicit binding
+		// ctx.ShouldBindWith(&form, binding.Form)
+		if ctx.ShouldBind(&form) == nil {
+			if form.User == "john" && form.Password == "doe" {
+				ctx.JSON(http.StatusOK, gin.H{"status": "You are logged in!"})
+			} else {
+				ctx.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
+			}
+		}
+		log.Print(form)
 	})
 }
