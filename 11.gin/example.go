@@ -17,6 +17,7 @@ func main() {
 	go serverPush()
 	JSONP(router)
 	formBinding(router)
+	formHandle(router)
 
 	// router.Run() // listen and serve on 0.0.0.0:8080
 	router.Run("localhost:8080")
@@ -114,6 +115,7 @@ func formBinding(router *gin.Engine) {
 	router.POST("/login", func(ctx *gin.Context) {
 		var form LoginForm
 		// Explicit binding
+		// It could be XML, JSON or other formats
 		// ctx.ShouldBindWith(&form, binding.Form)
 		if ctx.ShouldBind(&form) == nil {
 			if form.User == "john" && form.Password == "doe" {
@@ -124,4 +126,19 @@ func formBinding(router *gin.Engine) {
 		}
 		log.Print(form)
 	})
+}
+
+func formHandle(router *gin.Engine) {
+	router.POST("/form_post", func(ctx *gin.Context) {
+		message := ctx.PostForm("message")
+		nick := ctx.DefaultPostForm("nick", "anounymous")
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"status":  "posted",
+			"message": message,
+			"nick":    nick,
+		})
+	})
+	// curl -v --form message=hello http://localhost:8080/form_post
+	// {"message":"hello","nick":"anounymous","status":"posted"}
 }
