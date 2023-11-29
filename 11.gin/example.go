@@ -22,6 +22,7 @@ func main() {
 	pureJSON(router)
 	queryAndPostform(router)
 	secureJSON(router)
+	renderDatas(router)
 
 	// router.Run() // listen and serve on 0.0.0.0:8080
 	router.Run("localhost:8080")
@@ -179,4 +180,36 @@ func secureJSON(router *gin.Engine) {
 
 		ctx.SecureJSON(http.StatusOK, names)
 	})
+}
+
+func renderDatas(router *gin.Engine) {
+	result := gin.H{"message": "Hey", "status": http.StatusOK}
+	router.GET("/severalJSON", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, result)
+	})
+
+	router.GET("/moreJSON", func(ctx *gin.Context) {
+		// You can use a struct
+		var msg struct {
+			Name    string `json:"user"`
+			Message string
+			Number  int
+		}
+		msg.Name = "Milo"
+		msg.Message = "Hey"
+		msg.Number = 1990
+
+		// Note: the msg.name is "user" in json
+		// Output: {"user":"Milo","Message":"Hey","Number":1990}
+		ctx.JSON(http.StatusOK, msg)
+	})
+
+	router.GET("/severalXML", func(ctx *gin.Context) {
+		ctx.XML(http.StatusOK, result)
+	})
+
+	router.GET("/severalYAML", func(ctx *gin.Context) {
+		ctx.YAML(http.StatusOK, result)
+	})
+
 }
