@@ -23,6 +23,9 @@ func main() {
 	queryAndPostform(router)
 	secureJSON(router)
 	renderDatas(router)
+	useRouteParam(router)
+	useGroup(router)
+	useBasicAuth(router)
 
 	// router.Run() // listen and serve on 0.0.0.0:8080
 	router.Run("localhost:8080")
@@ -211,5 +214,52 @@ func renderDatas(router *gin.Engine) {
 	router.GET("/severalYAML", func(ctx *gin.Context) {
 		ctx.YAML(http.StatusOK, result)
 	})
+}
+
+func useRouteParam(router *gin.Engine) {
+	router.GET("/user/:name", func(ctx *gin.Context) {
+		name := ctx.Param("name")
+		ctx.String(http.StatusOK, "Bonjour %s！", name)
+	})
+}
+
+func useGroup(router *gin.Engine) {
+	v1 := router.Group("v1")
+	{
+		loginHandler := func(ctx *gin.Context) {
+			ctx.JSON(http.StatusOK, gin.H{
+				"message": "Logged in,",
+				"version": "v1",
+			})
+		}
+		registHandler := func(ctx *gin.Context) {
+			ctx.JSON(http.StatusOK, gin.H{
+				"message": "Registered successful.",
+				"version": "v1",
+			})
+		}
+		v1.GET("/login", loginHandler)
+		v1.GET("/register", registHandler)
+	}
+	v2 := router.Group("v2")
+	{
+		loginHandler := func(ctx *gin.Context) {
+			ctx.JSON(http.StatusOK, gin.H{
+				"message": "Logged in,",
+				"version": "v2",
+			})
+		}
+		registHandler := func(ctx *gin.Context) {
+			ctx.JSON(http.StatusOK, gin.H{
+				"message": "Registered successful.",
+				"version": "v2",
+			})
+		}
+		v2.GET("/login", loginHandler)
+		v2.GET("/register", registHandler)
+	}
+}
+
+func useBasicAuth(router *gin.Engine) {
 
 }
