@@ -1,0 +1,1 @@
+console.log('Salut, comment ça va?');
