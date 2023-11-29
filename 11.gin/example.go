@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -18,6 +19,9 @@ func main() {
 	JSONP(router)
 	formBinding(router)
 	formHandle(router)
+	pureJSON(router)
+	queryAndPostform(router)
+	secureJSON(router)
 
 	// router.Run() // listen and serve on 0.0.0.0:8080
 	router.Run("localhost:8080")
@@ -141,4 +145,38 @@ func formHandle(router *gin.Engine) {
 	})
 	// curl -v --form message=hello http://localhost:8080/form_post
 	// {"message":"hello","nick":"anounymous","status":"posted"}
+}
+
+func pureJSON(router *gin.Engine) {
+	json := gin.H{
+		"html": "<b>Hello, world!</b>",
+	}
+	router.GET("/json", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, json)
+	})
+	// Output: {"html":"\u003cb\u003eHello, world!\u003c/b\u003e"}
+
+	router.GET("/purejson", func(ctx *gin.Context) {
+		ctx.PureJSON(http.StatusOK, json)
+	})
+	// Output: {"html":"<b>Hello, world!</b>"}
+}
+
+func queryAndPostform(router *gin.Engine) {
+	router.POST("/post", func(ctx *gin.Context) {
+		id := ctx.Query("id")
+		page := ctx.DefaultQuery("page", "0")
+		name := ctx.PostForm("name")
+		message := ctx.PostForm("message")
+
+		fmt.Printf("id: %s, page: %s, name: %s, message: %s", id, page, name, message)
+	})
+}
+
+func secureJSON(router *gin.Engine) {
+	router.GET("/secureJSON", func(ctx *gin.Context) {
+		names := []string{"lena", "austin", "foo"}
+
+		ctx.SecureJSON(http.StatusOK, names)
+	})
 }
