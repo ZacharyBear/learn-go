@@ -3,15 +3,20 @@ package router
 import (
 	"fmt"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"zenkie.cn/learn-gin/controllers"
 )
 
 func Router() *gin.Engine {
 	router := gin.Default()
 
+	// collectLog(router)
 	setupPing(router)
 	setupAsciiJSON(router)
 	renderHTML(router)
@@ -26,7 +31,12 @@ func Router() *gin.Engine {
 	useRouteParam(router)
 	useGroup(router)
 	useBasicAuth(router)
+	useStatic(router)
+	useCustomMiddleware(router)
 
+	// examples
+	router.GET("/user-info", controllers.GetUserInfo)
+	router.GET("/user-list", controllers.GetList)
 	return router
 }
 
@@ -282,6 +292,66 @@ func useBasicAuth(router *gin.Engine) {
 		}
 	})
 }
-func temp(router *gin.Engine) {
 
+func collectLog(router *gin.Engine) {
+	gin.DisableConsoleColor()
+
+	// record to file
+	f, _ := os.Create("gin.log")
+	gin.DefaultWriter = io.MultiWriter(f)
+
+	// also record to console
+	// gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
+
+	// Define logging format
+	// This will enable console logging
+	gin.DebugPrintRouteFunc = func(httpMethod, absolutePath, handlerName string, nuHandlers int) {
+		log.Printf("GIN %v %v %v %v\n", httpMethod, absolutePath, handlerName, nuHandlers)
+	}
+}
+
+func useStatic(router *gin.Engine) {
+	router.Static("/assets", "./assets")
+}
+
+func Logger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		t := time.Now()
+
+		c.Set("example", "12345")
+
+		// Before request
+
+		c.Next()
+
+		// After request
+		latency := time.Since(t)
+		status := c.Writer.Status()
+		log.Printf("Spend: %v\tStatus: %v", latency, status)
+	}
+}
+
+func useCustomMiddleware(router *gin.Engine) {
+	router.Use(Logger())
+
+	// custom logger
+	router.Use(gin.LoggerWithFormatter(func(params gin.LogFormatterParams) string {
+		// my format
+		return fmt.Sprintf("[Mon gin log] %s - [%s] \"%s %s %s %d %s \"%s\" %s\"\n",
+			params.ClientIP,
+			params.TimeStamp.Format(time.RFC1123),
+			params.Method,
+			params.Path,
+			params.Request.Proto,
+			params.StatusCode,
+			params.Latency,
+			params.Request.UserAgent(),
+			params.ErrorMessage,
+		)
+
+	}))
+
+	router.GET("/test", func(ctx *gin.Context) {
+		log.Println(ctx.MustGet("example").(string))
+	})
 }
