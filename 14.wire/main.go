@@ -1,7 +1,11 @@
 package main
 
-import "learn-wire/app"
+import "learn-wire/entity"
 
 func main() {
-	app.LoadApp()
+	message := entity.NewMessage()
+	greeter := entity.NewGreeter(message)
+	event := entity.NewEvent(greeter)
+
+	event.Start()
 }
